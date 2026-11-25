@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lopunaikojen Megabileet</title>
+<style>
+:root{--bg:#f5f5f4;--card:#fff;--tx:#1c1917;--mut:#78716c;--bd:#e7e5e4;--ac:#d97706;--acs:#fef3c7;--hd:#1c1917;--ok:#059669;--oks:#d1fae5;--bad:#e11d48;--bads:#ffe4e6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14110f;--card:#211d1a;--tx:#f5f5f4;--mut:#a8a29e;--bd:#38322e;--acs:#3b2a0c;--hd:#0c0a09;--oks:#064e3b;--bads:#4c0519}}
+:root[data-theme="dark"]{--bg:#14110f;--card:#211d1a;--tx:#f5f5f4;--mut:#a8a29e;--bd:#38322e;--acs:#3b2a0c;--hd:#0c0a09;--oks:#064e3b;--bads:#4c0519}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:#0284c7}h2,h3,h4,p{margin:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-bottom:1px solid var(--bd)}
+.wrap{max-width:900px;margin:0 auto;padding:12px 16px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.sp{justify-content:space-between}.col{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}
+.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:7px 12px;font:600 13px inherit;font-family:inherit;cursor:pointer}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff}.btn.g{background:var(--ok);border-color:var(--ok);color:#fff}.btn.r{background:var(--bad);border-color:var(--bad);color:#fff}
+.pill{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--bd);border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600;background:var(--bg)}
+.pill.ok{background:var(--oks);color:var(--ok)}.pill.wa{background:var(--acs);color:var(--ac)}.pill.no{background:var(--bads);color:var(--bad)}
+.sm{font-size:12px;color:var(--mut)}.big{font-size:26px}
+.yr{background:var(--hd);color:#fff;padding:12px 18px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.yrb{border:1px solid var(--bd);border-top:0;border-radius:0 0 16px 16px;background:var(--card);padding:12px;display:flex;flex-direction:column;gap:12px}
+.se{border:1px solid var(--bd);border-left:5px solid var(--c);border-radius:12px;overflow:hidden}
+.seh{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg)}
+.ev{padding:12px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:8px}
+.warn{padding:6px 12px;background:var(--bads);color:var(--bad);font-size:12px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+.md{background:var(--card);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+label{font-size:12px;font-weight:700;display:block;margin-bottom:3px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+input[type=radio],input[type=checkbox]{width:auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.em{display:flex;flex-wrap:wrap;gap:6px}.em label{font-size:22px;border:1px solid var(--bd);border-radius:10px;padding:3px 7px;margin:0;cursor:pointer}.em input{display:none}.em input:checked+span{outline:2px solid var(--ac);outline-offset:4px;border-radius:6px}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;background:#1c1917;color:#fff;padding:10px 14px;border-radius:14px;z-index:90;font-weight:600;font-size:13px}
+</style></head>
+<body><div id="app"></div><div id="toast"></div>
+<script>
+const SE=[{id:'spring',n:'Kevät',l:'Huhtikuu – Kesäkuu',m:[4,5,6],d:5,c:'#10b981'},{id:'autumn',n:'Syksy',l:'Elokuu – Lokakuu',m:[8,9,10],d:9,c:'#f59e0b'},{id:'winter',n:'Talvi',l:'Marraskuu – Maaliskuu',m:[11,12,1,2,3],d:12,c:'#0ea5e9'}];
+const ICONS=['☄️','🎉','🔥','🏕️','🍕','🎲','🎸','🏆','🚀','👑','🪩','🍻'];
+const AVS=['🦊','🐻','🦉','🐼','🦝','🐺','🦁','🐸','🐙','🦄','🐲','🤖','👽','🧙','🤠','🥷','🎸','🍄'];
+const LOCS=[['Nuuksion kansallispuisto, Espoo','Haltiantie 7, 02820 Espoo'],['Suomenlinna, Helsinki','Suomenlinna C 72, 00190 Helsinki'],['Kallio, Helsinki','Karhupuisto, 00530 Helsinki'],['Lauttasaaren rantasauna','Vattuniemenranta 2, 00210 Helsinki'],['Oodin kansalaistori','Töölönlahdenkatu 4, 00100 Helsinki']];
+const KEY='lopunaikojen-megabileet-state-v1',CY=new Date().getFullYear();
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fd=s=>{if(!s)return'';const[y,m,d]=s.split('-');return`${+d}.${+m}.${y}`};
+const maps=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q||'Helsinki');
+const seasonOf=d=>{const m=+(d||'').split('-')[1]||1;return SE.find(s=>s.m.includes(m))||SE[0]};
+const defDate=(y,sid)=>`${y}-${String((SE.find(s=>s.id===sid)||SE[0]).d).padStart(2,'0')}-15`;
+function init(){const P=CY-1,N=CY+1;const ev=(id,t,date,time,end,sid,ln,ad,o,notes,st,rsvp,r,mem)=>({id,title:t,date,time,endDate:date,endTime:end,year:+date.slice(0,4),seasonId:sid,locationName:ln,address:ad,organizerId:o,notes,status:st,locked:false,rsvp,rating:r,memoryText:mem||''});
+return{group:{name:'Lopunaikojen Megabileet',subtitle:'Kaveriporukan aikajana, järjestämisvuorot ja muistot',icon:'☄️'},
+members:[{id:'m1',name:'Aino',avatar:'🦊'},{id:'m2',name:'Mikko',avatar:'🐻'},{id:'m3',name:'Sara',avatar:'🦉'},{id:'m4',name:'Olli',avatar:'🐼'}],
+events:[ev('e1','Kevään viimeinen bunkkerigrilli',`${P}-05-18`,'18:00','23:00','spring','Suomenlinna','Suomenlinna C 72, 00190 Helsinki','m1','Makkarat ja foliot mukaan.','completed',{},5,'Auringonlasku merellä ja huikea porukka!'),
+ev('e2','Syksyn meteoriittivalvojaiset',`${P}-09-21`,'21:30','02:00','autumn','Nuuksion kansallispuisto','Haltiantie 7, 02820 Espoo','m2','Makuualusta, termari ja taskulamppu.','completed',{},4,'Kirpeä syysyö ja muutama tähdenlento.'),
+ev('e3','Talven lautapeliturnaus',`${P}-12-14`,'17:00','23:30','winter','Kallio','Karhupuisto, 00530 Helsinki','m3','Palkintona kultainen pokaali.','completed',{},5,'Viimeinen kierros venyi pikkutunneille!'),
+ev('e4','Megabileiden kauden avajaiset',`${CY}-12-19`,'19:00','01:00','winter','Lauttasaaren rantasauna','Vattuniemenranta 2, 00210 Helsinki','m4','Tuo oma pyyhe ja rekvisiittaa!','upcoming',{m1:'yes',m2:'yes',m3:'maybe',m4:'yes'}),
+ev('e5','Kevään piknikpäivä',`${N}-05-16`,'14:00','20:00','spring','Oodin kansalaistori','Töölönlahdenkatu 4, 00100 Helsinki','m1','Nyyttikestit ja soittolista.','upcoming',{m1:'yes',m2:'yes',m3:'yes',m4:'maybe'})],
+unav:[{id:'u1',memberId:'m3',year:N,season:'spring',reason:'Vaihto-opiskelu'}],filter:'all',collapsed:{}}}
+let S;try{S=Object.assign(init(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=init()}
+let M=null;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Tallennus epäonnistui')}};
+function toast(t){$('#toast').innerHTML=`<div class="toast">✨ ${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$('#toast').innerHTML='',3000)}
+const mem=id=>S.members.find(m=>m.id===id)||{name:'Tuntematon',avatar:'🙂'};
+function stats(){const st={};S.members.forEach(m=>st[m.id]={...m,done:0,up:0,tot:0,last:0});
+S.events.forEach(e=>{const s=st[e.organizerId];if(!s)return;e.status==='completed'?s.done++:s.up++;s.tot++;const t=new Date(`${e.date}T${e.time||'12:00'}`).getTime();if(t>s.last)s.last=t});
+return Object.values(st).sort((a,b)=>a.tot-b.tot||a.done-b.done||a.last-b.last||a.name.localeCompare(b.name,'fi'))}
+const canDel=e=>true;
+const vs={yes:['ok','✅ Pääsee'],no:['no','✖ Ei pääse']};
+const pollHTML=e=>{const p=e.poll,n=S.members.length;return`<div class="card col" style="background:var(--acs)"><div class="row sp"><b>🗳️ Alustava kysely</b><span class="pill">Vaaditaan ${p.min}/${n} osallistujaa</span></div>${p.options.map(o=>{const y=S.members.filter(m=>o.votes?.[m.id]==='yes').length,ok=y>=p.min;return`<div class="card col"><div class="row sp"><b>📅 ${fd(o.date)} ${esc(o.time)} – ${o.endDate!==o.date?fd(o.endDate)+' ':''}${esc(o.endTime)}</b><span class="pill ${ok?'ok':'wa'}">${ok?'✅ Toteutuu':'Kasassa'} ${y}/${p.min}</span></div><div class="row">${S.members.map(m=>{const v=vs[o.votes?.[m.id]]||['','❔ Ei vastattu'];return`<button class="pill ${v[0]}" style="cursor:pointer" data-a="vote" data-id="${e.id}" data-o="${o.id}" data-m="${m.id}">${m.avatar} ${esc(m.name)}: ${v[1]}</button>`}).join('')}</div></div>`}).join('')}<div class="sm">Kun ajankohta on päätetty, avaa ✏️ Muokkaa ja ruksi “Toteutuva tapahtuma”.</div></div>`};
+function evHTML(e){const o=mem(e.organizerId),done=e.status==='completed',poll=!!(e.poll&&!e.poll.confirmed);
+const rs={yes:['ok','Mukana'],maybe:['wa','Ehkä'],no:['no','Ei pääse']};
+return`<div class="ev"><div class="row sp"><div class="row"><span class="pill ${done?'ok':'wa'}">${done?'✓ Pidetty':'⏳ Tulossa'}</span>${poll?'<span class="pill wa">🗳️ Ajankohta auki</span>':`<span class="pill">📅 ${fd(e.date)} ${esc(e.time)}${e.endTime?' – '+(e.endDate&&e.endDate!==e.date?fd(e.endDate)+' ':'')+esc(e.endTime):''}</span>`}${done&&e.rating?`<span class="pill wa">★ ${e.rating}/5</span>`:''}</div>
+<div class="row"><button class="btn" data-a="share" data-id="${e.id}">Jaa</button>${done?'':`${poll?'':`<button class="btn g" data-a="done" data-id="${e.id}">Kuittaa pidetyksi</button>`}<button class="btn" data-a="editev" data-id="${e.id}">✏️</button>`}${canDel(e)?`<button class="btn" data-a="delev" data-id="${e.id}">🗑️</button>`:'<span class="pill" title="Lukittu">🔒</span>'}</div></div>
+<h3>${esc(e.title)}</h3><div class="sm">${o.avatar} Järjestäjä: <b>${esc(o.name)}</b> · <a target="_blank" rel="noopener noreferrer" href="${maps(e.address||e.locationName)}">📍 ${esc(e.locationName)}${e.address?' ('+esc(e.address)+')':''}</a></div>
+${done&&e.memoryText?`<p class="card" style="font-style:italic;background:var(--acs)">“${esc(e.memoryText)}”</p>`:e.notes?`<p class="card sm">${esc(e.notes)}</p>`:''}
+${poll?pollHTML(e):done?`<div class="sm">Mukana: ${(e.attendees||[]).map(i=>mem(i).avatar+' '+esc(mem(i).name)).join(', ')||'–'}</div>`:`<div class="row"><span class="sm">Osallistuminen:</span>${S.members.map(m=>{const r=rs[e.rsvp?.[m.id]||'maybe'];return`<button class="pill ${r[0]}" style="cursor:pointer" data-a="rsvp" data-id="${e.id}" data-m="${m.id}">${m.avatar} ${esc(m.name)}: ${r[1]}</button>`}).join('')}</div>`}</div>`}
+function view(){const q=stats(),next=q[0],g=S.group;
+const years=[...new Set(S.events.map(e=>+e.year))].sort();
+const fe=S.events.filter(e=>S.filter==='all'||e.status===S.filter);
+return`<div class="top"><div class="wrap row sp"><div class="row"><button class="btn big" data-a="settings">${esc(g.icon)}</button><div><h2 style="font-size:19px">${esc(g.name)}</h2><div class="sm">${esc(g.subtitle)}</div></div></div>
+<div class="row"><span class="pill ok">✓ Tallennettu selaimeen</span><button class="btn" data-a="members">👥 Jäsenet (${S.members.length})</button><button class="btn p" data-a="newev">＋ Uusi tapahtuma</button></div></div></div>
+<div class="wrap col"><div class="card col"><div class="row sp">${next?`<div class="row card" style="background:var(--acs)"><span class="big">${next.avatar}</span><div><div class="sm"><b>SEURAAVA JÄRJESTÄMISVUORO</b></div><b>${esc(next.name)}</b> <span class="sm">(tapahtumia: ${next.tot})</span></div></div>`:''}
+<div class="row">${[['all','Kaikki'],['upcoming','Tulevat'],['completed','Pidetyt']].map(([id,l])=>`<button class="btn ${S.filter===id?'p':''}" data-a="filter" data-id="${id}">${l}</button>`).join('')}</div></div>
+<div class="row"><span class="sm">Porukka:</span>${S.members.map(m=>`<button class="pill" style="cursor:pointer" data-a="editmem" data-id="${m.id}">${m.avatar} ${esc(m.name)} · ${q.find(x=>x.id===m.id).tot}</button>`).join('')}</div></div>
+${years.length?years.map(y=>{const n=fe.filter(e=>+e.year===y).length,col=S.collapsed[y];
+return`<div><div class="yr" data-a="toggle" data-id="${y}"><h2>${y} ${col?'▾':'▴'}</h2><span class="pill" style="color:var(--tx)">${n} tapahtumaa</span></div>${col?'':`<div class="yrb">${SE.map(s=>{
+const se=fe.filter(e=>+e.year===y&&e.seasonId===s.id).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+const cf=S.unav.filter(u=>+u.year===y&&u.season===s.id);
+return`<div class="se" style="--c:${s.c}"><div class="seh"><div><b>${s.n}</b> <span class="sm">${s.l}</span></div>${y>=CY?`<button class="btn" data-a="newev" data-y="${y}" data-s="${s.id}">＋ Lisää tapahtuma</button>`:''}</div>
+${cf.length?`<div class="warn">⚠️ Esteet: ${cf.map(c=>mem(c.memberId).avatar+' '+esc(mem(c.memberId).name)+' ('+esc(c.reason)+')').join(', ')}</div>`:''}
+${se.length?se.map(evHTML).join(''):'<div class="ev sm">Ei tapahtumia tälle kaudelle.</div>'}</div>`}).join('')}</div>`}</div>`}).join(''):'<div class="card">Ei tapahtumia. Lisää ensimmäinen!</div>'}</div>${modal()}`}
+const emPick=(name,list,sel)=>`<div class="em">${list.map(e=>`<label><input type="radio" name="${name}" value="${e}" ${e===sel?'checked':''}><span>${e}</span></label>`).join('')}</div>`;
+const wrapM=(t,body)=>`<div class="ov" data-a="closeov"><div class="md"><div class="row sp"><h3>${t}</h3><button class="btn" data-a="close">✕</button></div>${body}</div></div>`;
+const optRow=o=>`<div class="opt card col"><input type="hidden" name="oid" value="${esc(o.id)}"><div class="grid"><div><label>Alkaa</label><input type="date" name="od" value="${o.date||''}"></div><div><label>Kello</label><input type="time" name="ot" value="${o.time||'18:00'}"></div><div><label>Päättyy</label><input type="date" name="oed" value="${o.endDate||''}"></div><div><label>Kello</label><input type="time" name="oet" value="${o.endTime||'23:00'}"></div></div><button type="button" class="btn" data-a="rmopt">Poista ajankohta</button></div>`;
+function modal(){if(!M)return'';const g=S.group;
+if(M.t==='settings')return wrapM('Ohjelman asetukset',`<form data-f="settings" class="col"><div><label>Nimi</label><input name="name" value="${esc(g.name)}"></div><div><label>Alateksti</label><input name="subtitle" value="${esc(g.subtitle)}"></div><div><label>Kuvake</label>${emPick('icon',ICONS,g.icon)}</div><div><label>Tai oma emoji</label><input name="custom" placeholder="🎉"></div><button class="btn p">Valmis</button></form>`);
+if(M.t==='mem'){const m=mem(M.id);return wrapM('Muokkaa jäsentä',`<form data-f="mem" class="col"><div><label>Nimi</label><input name="name" required value="${esc(m.name)}"></div><div><label>Hahmo</label>${emPick('avatar',AVS,m.avatar)}</div><button class="btn p">Tallenna</button></form>`)}
+if(M.t==='members'){const q=stats();return wrapM('Jäsenet, vuorot ja esteet',`<form data-f="addmem" class="row" style="flex-wrap:nowrap"><select name="avatar" style="width:70px">${AVS.slice(0,12).map(a=>`<option>${a}</option>`).join('')}</select><input name="name" required placeholder="Uuden jäsenen nimi"><button class="btn p">Lisää</button></form>
+<h4 class="sm">VUOROJONO (vähiten järjestänyt ensin)</h4>${q.map((m,i)=>`<div class="card row sp" style="${i?'':'background:var(--acs)'}"><div class="row"><b>${i+1}.</b><span class="big">${m.avatar}</span><div><b>${esc(m.name)}</b>${i?'':' <span class="pill wa">SEURAAVA</span>'}<div class="sm">Pidettyjä: ${m.done} · Varattuja: ${m.up}</div></div></div><div class="row"><button class="btn" data-a="editmem" data-id="${m.id}">✏️</button>${S.members.length>2?`<button class="btn" data-a="delmem" data-id="${m.id}">🗑️</button>`:''}</div></div>`).join('')}
+<h4 class="sm">KAUSIKOHTAINEN ESTE</h4><form data-f="unav" class="col"><div class="grid"><select name="m">${S.members.map(m=>`<option value="${m.id}">${m.avatar} ${esc(m.name)}</option>`).join('')}</select><select name="y">${[CY,CY+1,CY+2].map(y=>`<option>${y}</option>`).join('')}</select></div><div class="grid"><select name="s">${SE.map(s=>`<option value="${s.id}">${s.n}</option>`).join('')}</select><input name="r" placeholder="Syy (matka, kiire...)"></div><button class="btn r">Tallenna este</button></form>
+${S.unav.map(u=>`<div class="card row sp sm"><span>${mem(u.memberId).avatar} <b>${esc(mem(u.memberId).name)}</b> (${SE.find(s=>s.id===u.season)?.n} ${u.year}) – ${esc(u.reason)}</span><button class="btn" data-a="delunav" data-id="${u.id}">🗑️</button></div>`).join('')}`)}
+if(M.t==='ev'){const e=M.e||{},d=e.date||defDate(M.y||CY,M.s||'autumn'),isP=!!(e.poll&&!e.poll.confirmed),cnt=o=>Object.values(o.votes||{}).filter(v=>v==='yes').length,blank={id:'',date:d,time:'18:00',endDate:d,endTime:'23:00'},opts=isP?e.poll.options:[blank,blank],bestId=isP?[...opts].sort((a,b)=>cnt(b)-cnt(a))[0].id:'';
+return wrapM(M.e?'Muokkaa tapahtumaa':'Uusi tapahtuma',`<form data-f="ev" class="col"><div><label>Nimi *</label><input name="title" required value="${esc(e.title)}"></div>
+<label class="pill" style="margin:0;align-self:flex-start"><input type="checkbox" name="poll" ${isP?'checked':''}> 🗳️ Alustava kysely (ehdota useita ajankohtia)</label><div id="datebox" class="grid" style="${isP?'display:none':''}"><div><label>Alkaa *</label><input type="date" name="date" min="${CY}-01-01" value="${d}"></div><div><label>Kello *</label><input type="time" name="time" value="${e.time||'18:00'}"></div><div><label>Päättyy *</label><input type="date" name="endDate" value="${e.endDate||d}"></div><div><label>Kello *</label><input type="time" name="endTime" value="${e.endTime||'23:00'}"></div></div><div id="pollbox" class="col" style="${isP?'':'display:none'}"><div><label>Vaadittu osallistujamäärä (porukassa ${S.members.length} jäsentä)</label><input type="number" name="min" min="1" max="${S.members.length}" value="${e.poll?.min||Math.min(3,S.members.length)}"></div><label>Vaihtoehtoiset ajankohdat</label><div id="opts" class="col">${opts.map(optRow).join('')}</div><button type="button" class="btn" data-a="addopt">＋ Lisää ajankohta</button></div>${isP?`<div id="confwrap"><label class="pill" style="margin:0"><input type="checkbox" name="confirm"> ✅ Toteutuva tapahtuma</label><div id="pick" style="display:none;margin-top:8px"><label>Valittu ajankohta</label><select name="pick">${e.poll.options.map(o=>`<option value="${o.id}" ${o.id===bestId?'selected':''}>${fd(o.date)} ${esc(o.time)} (${cnt(o)}/${e.poll.min} pääsee)</option>`).join('')}</select></div></div>`:''}<div class="sm" id="hint"></div>
+<div><label>Järjestäjä</label><select name="org">${stats().map((m,i)=>`<option value="${m.id}" ${m.id===(e.organizerId||stats()[0].id)?'selected':''}>${m.avatar} ${esc(m.name)} — ${m.tot} tapahtumaa${i?'':' (seuraava)'}</option>`).join('')}</select></div>
+<div class="row">${LOCS.map(([l,a])=>`<button type="button" class="pill" style="cursor:pointer" data-a="loc" data-l="${esc(l)}" data-ad="${esc(a)}">${l}</button>`).join('')}</div>
+<div class="grid"><div><label>Paikan nimi</label><input name="ln" value="${esc(e.locationName)}"></div><div><label>Osoite</label><input name="ad" value="${esc(e.address)}"></div></div>
+<div class="card sm">📍 Valitse paikka Google Mapsista, kopioi osoite ja liitä se Osoite-kenttään.<br><a id="mapl" target="_blank" rel="noopener noreferrer" href="${maps(e.address||e.locationName)}"><b>🗺️ Hae osoite Google Mapsista →</b></a></div><div><label>Lisätiedot</label><textarea name="notes" rows="2">${esc(e.notes)}</textarea></div><button class="btn p">Tallenna</button></form>`)}
+if(M.t==='done'){const e=M.e;return wrapM('Kuittaa pidetyksi: '+esc(e.title),`<form data-f="done" class="col"><div><label>Mukana olleet</label><div class="row">${S.members.map(m=>`<label class="pill" style="margin:0"><input type="checkbox" name="att" value="${m.id}" ${e.rsvp?.[m.id]!=='no'?'checked':''}> ${m.avatar} ${esc(m.name)}</label>`).join('')}</div></div><div><label>Arvosana</label><select name="rating">${[5,4,3,2,1].map(n=>`<option value="${n}">${'★'.repeat(n)}</option>`).join('')}</select></div><div><label>Muisto tai kohokohta</label><textarea name="mem" rows="2"></textarea></div><button class="btn g">Tallenna pidetyksi</button></form>`)}
+if(M.t==='del')return wrapM('Poistetaanko?',`<p>Haluatko varmasti poistaa tapahtuman <b>“${esc(M.e.title)}”</b>?</p>${M.e.status==='completed'?'<p class="warn" style="border-radius:10px">⚠️ Tämä on jo pidetty tapahtuma. Sen arvosana, muisto ja osallistujatiedot poistetaan pysyvästi.</p>':''}<p class="sm">Toimintoa ei voi perua.</p><div class="row"><button class="btn" data-a="close">Peruuta</button><button class="btn r" data-a="confdel">Kyllä, poista</button></div>`);return''}
+const draw=()=>{$('#app').innerHTML=view();save()};
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id,evn=S.events.find(e=>e.id===id);
+if(a==='closeov'){if(ev.target!==t)return;M=null}else if(a==='close')M=null;
+else if(a==='settings')M={t:'settings'};else if(a==='members')M={t:'members'};
+else if(a==='filter')S.filter=id;else if(a==='toggle')S.collapsed[id]=!S.collapsed[id];
+else if(a==='editmem')M={t:'mem',id};
+else if(a==='newev')M={t:'ev',y:+t.dataset.y||CY,s:t.dataset.s};else if(a==='editev')M={t:'ev',e:evn};
+else if(a==='done')M={t:'done',e:evn};else if(a==='delev')M={t:'del',e:evn};
+else if(a==='confdel'){S.events=S.events.filter(e=>e.id!==M.e.id);M=null;toast('Tapahtuma poistettu')}
+else if(a==='rsvp'){const o=['yes','maybe','no'],c=evn.rsvp?.[t.dataset.m]||'maybe';evn.rsvp={...evn.rsvp,[t.dataset.m]:o[(o.indexOf(c)+1)%3]}}
+else if(a==='delmem'){S.members=S.members.filter(m=>m.id!==id);S.unav=S.unav.filter(u=>u.memberId!==id)}
+else if(a==='delunav')S.unav=S.unav.filter(u=>u.id!==id);
+else if(a==='addopt'){$('#opts').insertAdjacentHTML('beforeend',optRow({id:'',date:'',time:'18:00',endDate:'',endTime:'23:00'}));return}else if(a==='rmopt'){if(document.querySelectorAll('.opt').length>1)t.closest('.opt').remove();return}else if(a==='vote'){const o=evn.poll.options.find(x=>x.id===t.dataset.o);o.votes=o.votes||{};const c=o.votes[t.dataset.m],n=c==='yes'?'no':c==='no'?'':'yes';if(n)o.votes[t.dataset.m]=n;else delete o.votes[t.dataset.m]}else if(a==='loc'){const f=t.closest('form');f.ln.value=t.dataset.l;f.ad.value=t.dataset.ad;$('#mapl').href=maps(t.dataset.ad);return}
+else if(a==='share'){const o=mem(evn.organizerId),txt=[`🎉 ${evn.title}`,`📅 ${fd(evn.date)} klo ${evn.time}`,`⏳ Päättyy: ${evn.endDate!==evn.date?fd(evn.endDate)+' ':''}klo ${evn.endTime}`,`📍 ${[evn.locationName,evn.address].filter(Boolean).join(' – ')}`,`👤 Järjestäjä: ${o.name}`].join('\n');
+try{navigator.clipboard.writeText(txt)}catch(e){}window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener,noreferrer');toast('Tiedot kopioitu, WhatsApp avattu');return}
+draw()});
+const sync=f=>{const p=f.poll.checked,c=!!(f.confirm&&f.confirm.checked),sh=(i,v)=>{const x=$(i);if(x)x.style.display=v?'':'none'};sh('#datebox',!p);sh('#pollbox',p&&!c);sh('#confwrap',p);sh('#pick',c)};
+document.addEventListener('change',e=>{const f=e.target.closest('form[data-f=ev]');if(!f)return;sync(f);const dv=f.poll.checked?(f.querySelector('[name=od]')?.value||f.date.value):f.date.value;if(!dv)return;const s=seasonOf(dv),y=+dv.slice(0,4),c=S.unav.filter(u=>+u.year===y&&u.season===s.id);
+if(e.target===f.date&&f.endDate.value<f.date.value)f.endDate.value=f.date.value;
+$('#hint').innerHTML=`Kausi: <b>${s.n} ${y}</b>${c.length?` · ⚠️ Esteet: ${c.map(x=>esc(mem(x.memberId).name)+' ('+esc(x.reason)+')').join(', ')}`:''}`});
+document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,k=f.dataset.f,d=Object.fromEntries(new FormData(f));
+if(k==='settings'){S.group={name:d.name,subtitle:d.subtitle,icon:(d.custom||'').trim()||d.icon||S.group.icon};M=null;toast('Asetukset päivitetty')}
+else if(k==='mem'){Object.assign(mem(M.id),{name:d.name.trim(),avatar:d.avatar});M=null;toast('Profiili päivitetty')}
+else if(k==='addmem'){S.members.push({id:'m-'+Date.now(),name:d.name.trim(),avatar:d.avatar});toast('Jäsen lisätty')}
+else if(k==='unav'){S.unav.push({id:'u-'+Date.now(),memberId:d.m,year:+d.y,season:d.s,reason:d.r.trim()||'Kiire / muu meno'});toast('Este tallennettu')}
+else if(k==='ev'){const fdt=new FormData(f);let T={date:d.date,time:d.time,endDate:d.endDate,endTime:d.endTime},poll=null,conf=null;
+if(d.poll){const old=M.e?.poll?.options||[];
+if(d.confirm){const po=old.find(x=>x.id===d.pick)||old[0];T={date:po.date,time:po.time,endDate:po.endDate,endTime:po.endTime};conf=po}
+else{const od=fdt.getAll('od'),ot=fdt.getAll('ot'),oed=fdt.getAll('oed'),oet=fdt.getAll('oet'),oid=fdt.getAll('oid');
+const op=od.map((x,i)=>({id:oid[i]||'o-'+Date.now()+'-'+i,date:x,time:ot[i]||'18:00',endDate:oed[i]||x,endTime:oet[i]||'23:00',votes:old.find(q=>q.id===oid[i])?.votes||{}})).filter(x=>x.date);
+if(!op.length){toast('Lisää vähintään yksi ajankohta');return}
+op.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));poll={min:Math.max(1,+d.min||1),confirmed:false,options:op};T={date:op[0].date,time:op[0].time,endDate:op[0].endDate,endTime:op[0].endTime}}}
+else if(!d.date||!d.time||!d.endDate||!d.endTime){toast('Täytä alkamis- ja päättymisaika');return}
+const year=+T.date.slice(0,4);if(year<CY){toast('Menneille vuosille ei voi lisätä');return}
+const o={title:d.title.trim(),...T,year,seasonId:seasonOf(T.date).id,locationName:d.ln.trim()||'Porukan valitsema paikka',address:d.ad.trim(),organizerId:d.org,notes:d.notes.trim()};
+if(M.e){Object.assign(M.e,o);if(poll)M.e.poll=poll;else if(conf){M.e.poll.confirmed=true;const r={};S.members.forEach(m=>{const v=conf.votes?.[m.id];r[m.id]=v==='yes'?'yes':v==='no'?'no':'maybe'});M.e.rsvp=r}else delete M.e.poll}else{const r={};S.members.forEach(m=>r[m.id]=m.id===d.org?'yes':'maybe');S.events.push({...o,poll:poll||undefined,id:'ev-'+Date.now(),status:'upcoming',locked:true,rsvp:r,attendees:[],rating:null,memoryText:''})}
+S.collapsed[year]=false;M=null;toast('Tapahtuma tallennettu')}
+else if(k==='done'){Object.assign(M.e,{status:'completed',attendees:new FormData(f).getAll('att'),rating:+d.rating,memoryText:d.mem.trim()});M=null;toast('Siirretty pidettyihin')}
+draw()});
+document.addEventListener('input',e=>{const f=e.target.closest('form[data-f=ev]');if(f&&(e.target===f.ln||e.target===f.ad))$('#mapl').href=maps(f.ad.value||f.ln.value)});
+draw();
+</script></body></html>

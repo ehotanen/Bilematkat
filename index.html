@@ -34,7 +34,7 @@ input[type=radio],input[type=checkbox]{width:auto}
 .toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;background:#1c1917;color:#fff;padding:10px 14px;border-radius:14px;z-index:90;font-weight:600;font-size:13px}
 </style></head>
 <body><div id="app"></div><div id="toast"></div>
-<script>
+<script type="module">
 const SE=[{id:'spring',n:'Kevät',l:'Huhtikuu – Kesäkuu',m:[4,5,6],d:5,c:'#10b981'},{id:'autumn',n:'Syksy',l:'Elokuu – Lokakuu',m:[8,9,10],d:9,c:'#f59e0b'},{id:'winter',n:'Talvi',l:'Marraskuu – Maaliskuu',m:[11,12,1,2,3],d:12,c:'#0ea5e9'}];
 const ICONS=['☄️','🎉','🔥','🏕️','🍕','🎲','🎸','🏆','🚀','👑','🪩','🍻'];
 const AVS=['🦊','🐻','🦉','🐼','🦝','🐺','🦁','🐸','🐙','🦄','🐲','🤖','👽','🧙','🤠','🥷','🎸','🍄'];
@@ -56,7 +56,13 @@ ev('e5','Kevään piknikpäivä',`${N}-05-16`,'14:00','20:00','spring','Oodin ka
 unav:[{id:'u1',memberId:'m3',year:N,season:'spring',reason:'Vaihto-opiskelu'}],filter:'all',collapsed:{}}}
 let S;try{S=Object.assign(init(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=init()}
 let M=null;
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Tallennus epäonnistui')}};
+const cloud={st:'local',ready:false,ref:null,set:null};
+const statusPill=()=>{const m={local:['wa','💾 Vain tässä selaimessa'],connecting:['wa','☁️ Yhdistetään…'],saving:['wa','☁️ Tallennetaan…'],saved:['ok','☁️ Tallennettu pilveen'],error:['no','⚠️ Pilviyhteysvirhe']}[cloud.st];return`<span id="stat" class="pill ${m[0]}">${m[1]}</span>`};
+const pill=()=>{const x=$('#stat');if(x)x.outerHTML=statusPill()};
+const payload=()=>JSON.parse(JSON.stringify({group:S.group,members:S.members,events:S.events,unav:S.unav}));
+let tmr;
+const save=(remote=true)=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Paikallinen tallennus epäonnistui')}
+if(remote&&cloud.ready){cloud.st='saving';pill();clearTimeout(tmr);tmr=setTimeout(()=>cloud.set(cloud.ref,{...payload(),updatedAt:Date.now()}).then(()=>{cloud.st='saved';pill()}).catch(e=>{console.error(e);cloud.st='error';pill();toast('Pilveen tallennus epäonnistui')}),300)}};
 function toast(t){$('#toast').innerHTML=`<div class="toast">✨ ${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$('#toast').innerHTML='',3000)}
 const mem=id=>S.members.find(m=>m.id===id)||{name:'Tuntematon',avatar:'🙂'};
 function stats(){const st={};S.members.forEach(m=>st[m.id]={...m,done:0,up:0,tot:0,last:0});
@@ -76,7 +82,7 @@ function view(){const q=stats(),next=q[0],g=S.group;
 const years=[...new Set(S.events.map(e=>+e.year))].sort();
 const fe=S.events.filter(e=>S.filter==='all'||e.status===S.filter);
 return`<div class="top"><div class="wrap row sp"><div class="row"><button class="btn big" data-a="settings">${esc(g.icon)}</button><div><h2 style="font-size:19px">${esc(g.name)}</h2><div class="sm">${esc(g.subtitle)}</div></div></div>
-<div class="row"><span class="pill ok">✓ Tallennettu selaimeen</span><button class="btn" data-a="members">👥 Jäsenet (${S.members.length})</button><button class="btn p" data-a="newev">＋ Uusi tapahtuma</button></div></div></div>
+<div class="row">${statusPill()}<button class="btn" data-a="members">👥 Jäsenet (${S.members.length})</button><button class="btn p" data-a="newev">＋ Uusi tapahtuma</button></div></div></div>
 <div class="wrap col"><div class="card col"><div class="row sp">${next?`<div class="row card" style="background:var(--acs)"><span class="big">${next.avatar}</span><div><div class="sm"><b>SEURAAVA JÄRJESTÄMISVUORO</b></div><b>${esc(next.name)}</b> <span class="sm">(tapahtumia: ${next.tot})</span></div></div>`:''}
 <div class="row">${[['all','Kaikki'],['upcoming','Tulevat'],['completed','Pidetyt']].map(([id,l])=>`<button class="btn ${S.filter===id?'p':''}" data-a="filter" data-id="${id}">${l}</button>`).join('')}</div></div>
 <div class="row"><span class="sm">Porukka:</span>${S.members.map(m=>`<button class="pill" style="cursor:pointer" data-a="editmem" data-id="${m.id}">${m.avatar} ${esc(m.name)} · ${q.find(x=>x.id===m.id).tot}</button>`).join('')}</div></div>
@@ -106,7 +112,8 @@ return wrapM(M.e?'Muokkaa tapahtumaa':'Uusi tapahtuma',`<form data-f="ev" class=
 <div class="card sm">📍 Valitse paikka Google Mapsista, kopioi osoite ja liitä se Osoite-kenttään.<br><a id="mapl" target="_blank" rel="noopener noreferrer" href="${maps(e.address||e.locationName)}"><b>🗺️ Hae osoite Google Mapsista →</b></a></div><div><label>Lisätiedot</label><textarea name="notes" rows="2">${esc(e.notes)}</textarea></div><button class="btn p">Tallenna</button></form>`)}
 if(M.t==='done'){const e=M.e;return wrapM('Kuittaa pidetyksi: '+esc(e.title),`<form data-f="done" class="col"><div><label>Mukana olleet</label><div class="row">${S.members.map(m=>`<label class="pill" style="margin:0"><input type="checkbox" name="att" value="${m.id}" ${e.rsvp?.[m.id]!=='no'?'checked':''}> ${m.avatar} ${esc(m.name)}</label>`).join('')}</div></div><div><label>Arvosana</label><select name="rating">${[5,4,3,2,1].map(n=>`<option value="${n}">${'★'.repeat(n)}</option>`).join('')}</select></div><div><label>Muisto tai kohokohta</label><textarea name="mem" rows="2"></textarea></div><button class="btn g">Tallenna pidetyksi</button></form>`)}
 if(M.t==='del')return wrapM('Poistetaanko?',`<p>Haluatko varmasti poistaa tapahtuman <b>“${esc(M.e.title)}”</b>?</p>${M.e.status==='completed'?'<p class="warn" style="border-radius:10px">⚠️ Tämä on jo pidetty tapahtuma. Sen arvosana, muisto ja osallistujatiedot poistetaan pysyvästi.</p>':''}<p class="sm">Toimintoa ei voi perua.</p><div class="row"><button class="btn" data-a="close">Peruuta</button><button class="btn r" data-a="confdel">Kyllä, poista</button></div>`);return''}
-const draw=()=>{$('#app').innerHTML=view();save()};
+const render=()=>{$('#app').innerHTML=view()};
+const draw=()=>{render();save()};
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id,evn=S.events.find(e=>e.id===id);
 if(a==='closeov'){if(ev.target!==t)return;M=null}else if(a==='close')M=null;
 else if(a==='settings')M={t:'settings'};else if(a==='members')M={t:'members'};
@@ -147,4 +154,19 @@ else if(k==='done'){Object.assign(M.e,{status:'completed',attendees:new FormData
 draw()});
 document.addEventListener('input',e=>{const f=e.target.closest('form[data-f=ev]');if(f&&(e.target===f.ln||e.target===f.ad))$('#mapl').href=maps(f.ad.value||f.ln.value)});
 draw();
+(async()=>{let cfg;try{cfg=(await import('./firebase-config.js')).default}catch(e){return}
+if(!cfg||!cfg.apiKey||cfg.apiKey.startsWith('LIITÄ'))return;
+try{cloud.st='connecting';pill();
+const B='https://www.gstatic.com/firebasejs/10.14.1/';
+const[{initializeApp},{getAuth,signInAnonymously},{getFirestore,doc,setDoc,onSnapshot}]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')]);
+const app=initializeApp(cfg);await signInAnonymously(getAuth(app));
+cloud.ref=doc(getFirestore(app),'megabileet','state');cloud.set=setDoc;
+onSnapshot(cloud.ref,{includeMetadataChanges:true},snap=>{
+if(!snap.exists()){cloud.ready=true;save();return}
+cloud.ready=true;if(snap.metadata.hasPendingWrites)return;
+const d=snap.data();S={...S,group:d.group||S.group,members:d.members||S.members,events:d.events||[],unav:d.unav||[]};
+if(M&&M.e){const ne=S.events.find(x=>x.id===M.e.id);if(ne)M.e=ne;else M=null}
+cloud.st='saved';if(!M)render();else pill();save(false)},
+err=>{console.error(err);cloud.st='error';pill()})}
+catch(e){console.error(e);cloud.st='error';pill()}})();
 </script></body></html>

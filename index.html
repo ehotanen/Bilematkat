@@ -87,7 +87,7 @@ const payload=()=>JSON.parse(JSON.stringify({group:S.group,members:S.members,eve
 let tmr;
 const save=(remote=true)=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Paikallinen tallennus epäonnistui')}
 if(remote&&cloud.ready){cloud.st='saving';pill();clearTimeout(tmr);tmr=setTimeout(()=>cloud.set(cloud.ref,{...payload(),updatedAt:Date.now()}).then(()=>{cloud.st='saved';pill()}).catch(e=>{console.error(e);cloud.st='error';pill();toast('Pilveen tallennus epäonnistui')}),300)}};
-function toast(t){$('#toast').innerHTML=`<div class="toast">✨ ${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$('#toast').innerHTML='',3000)}
+function toast(t,ms=3000){$('#toast').innerHTML=`<div class="toast">✨ ${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$('#toast').innerHTML='',ms)}
 const av=(m,n=28)=>{const h=[...String(m.id||m.name)].reduce((a,c)=>(a*31+c.charCodeAt(0))%360,7);return`<span class="av" style="--s:${n}px;--c1:hsl(${h} 90% 74%);--c2:hsl(${(h+45)%360} 85% 58%)">${m.avatar}</span>`};
 const mem=id=>S.members.find(m=>m.id===id)||{name:'Tuntematon',avatar:'🙂'};
 function stats(){const st={};S.members.forEach(m=>st[m.id]={...m,done:0,up:0,tot:0,last:0});
@@ -158,12 +158,12 @@ if(M.t==='del')return wrapM('Poistetaanko?',`<p>Haluatko varmasti poistaa tapaht
 const MC={};
 const readURL=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
 const shrink=(f,mx=1280,q=.72)=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{const k=Math.min(1,mx/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',q))};i.onerror=no;i.src=u});
-async function upMedia(files){const out=[];for(const f of files){const vid=f.type.startsWith('video/');if(vid&&!cloud.ready){toast('Videot vaativat Firebase-yhteyden');continue}if(!cloud.ready){try{out.push({id:'md-'+Date.now()+'-'+out.length,type:'i',name:f.name,u:await shrink(f,800,.6)})}catch(e){toast('Kuvan lisäys epäonnistui')}continue}if(vid&&f.size>8e6){toast(f.name+': video on liian suuri (max 8 Mt)');continue}
+async function upMedia(files){const out=[];for(const f of files){const vid=f.type.startsWith('video/');if(vid&&!cloud.ready){toast('Videot vaativat Firebase-yhteyden');continue}if(!cloud.ready){try{out.push({id:'md-'+Date.now()+'-'+out.length,type:'i',name:f.name,u:await shrink(f,800,.6)})}catch(e){toast('Kuvan lisäys epäonnistui')}continue}if(vid&&f.size>8e6){out.failed=(out.failed||0)+1;toast(f.name+': video on liian suuri (max 8 Mt)');continue}
 try{const d=vid?await readURL(f):await shrink(f),id='md-'+Date.now()+'-'+out.length,ch=d.match(/[\s\S]{1,500000}/g);
-await Promise.all(ch.map((c,i)=>cloud.set(cloud.doc(cloud.db,'media',id+'_'+i),{d:c})));out.push({id,type:vid?'v':'i',name:f.name,n:ch.length})}catch(e){console.error(e);toast('Tiedoston lisäys epäonnistui: '+f.name)}}return out}
+await Promise.all(ch.map((c,i)=>cloud.set(cloud.doc(cloud.db,'media',id+'_'+i),{d:c})));out.push({id,type:vid?'v':'i',name:f.name,n:ch.length})}catch(e){console.error(e);out.failed=(out.failed||0)+1;toast('Tiedoston lisäys epäonnistui: '+f.name)}}return out}
 const delMedia=l=>{if(!cloud.ready)return;l.forEach(m=>{for(let i=0;i<m.n;i++)cloud.del(cloud.doc(cloud.db,'media',m.id+'_'+i)).catch(()=>{})})};
 async function loadMedia(el){const id=el.dataset.mid;if(!MC[id])MC[id]=(async()=>{const n=+el.dataset.n,p=await Promise.all([...Array(n)].map((_,i)=>cloud.get(cloud.doc(cloud.db,'media',id+'_'+i))));const d=p.map(x=>x.data().d).join('');return URL.createObjectURL(await(await fetch(d)).blob())})();
-try{el.src=await MC[id];el.classList.add('ld')}catch(e){console.error(e);el.alt='Ei latautunut'}}
+try{el.src=await MC[id];el.classList.add('ld')}catch(e){console.error(e);delete MC[id];el.alt='Ei latautunut'}}
 const io=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){io.unobserve(x.target);loadMedia(x.target)}}),{rootMargin:'200px'}):null;
 const hookMedia=()=>{if(!cloud.ready)return;document.querySelectorAll('[data-mid]:not(.ld)').forEach(el=>io?io.observe(el):loadMedia(el))};
 const render=()=>{$('#app').innerHTML=view();document.documentElement.classList.toggle('lock',!!M);hookMedia()};
@@ -186,7 +186,7 @@ draw()});
 async function addCmt(f,d){const id=M.e.id,files=[...new FormData(f).getAll('files')].filter(x=>x&&x.size),b=f.querySelector('button.p');b.disabled=true;b.textContent='Lähetetään…';
 const media=files.length?await upMedia(files):[];const ev=S.events.find(x=>x.id===id);
 if(ev)ev.comments=[...(ev.comments||[]),{id:'c-'+Date.now(),memberId:d.who,rating:+d.rate||5,text:(d.text||'').trim(),date:new Date().toISOString().slice(0,10),media}];
-M=null;draw();toast('Palaute lisätty')}
+M=null;draw();media.failed?toast('Palaute lisättiin, mutta '+media.failed+' liitettä ei tallentunut. Tarkista, että Firestoren säännöissä on media-sääntö (ks. README).',9000):toast('Palaute lisätty')}
 const sync=f=>{const p=f.poll.checked,c=!!(f.confirm&&f.confirm.checked),sh=(i,v)=>{const x=$(i);if(x)x.style.display=v?'':'none'};sh('#datebox',!p);sh('#pollbox',p&&!c);sh('#confwrap',p);sh('#pick',c);sh('#partbox',!p&&f.endDate.value&&new Date(f.endDate.value+'T'+(f.endTime.value||'23:59'))<new Date())};
 document.addEventListener('change',e=>{const f=e.target.closest('form[data-f=ev]');if(!f)return;sync(f);const dv=f.poll.checked?(f.querySelector('[name=od]')?.value||f.date.value):f.date.value;if(!dv)return;const s=seasonOf(dv),y=+dv.slice(0,4),c=S.unav.filter(u=>+u.year===y&&u.season===s.id);
 if(e.target===f.endDate||e.target===f.endTime)f.dataset.et=1;if(f.dataset.new&&!f.dataset.et&&(e.target===f.date||e.target===f.time)&&f.date.value){f.endDate.value=addDays(f.date.value,1);f.endTime.value='12:00'}else if(e.target===f.date&&f.endDate.value<f.date.value)f.endDate.value=f.date.value;

@@ -32,9 +32,11 @@ input[type=radio],input[type=checkbox]{width:auto}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .em{display:flex;flex-wrap:wrap;gap:6px}.em label{font-size:26px;border:1px solid var(--bd);border-radius:10px;padding:3px 7px;margin:0;cursor:pointer}.em input{display:none}.em input:checked+span{outline:2px solid var(--ac);outline-offset:4px;border-radius:6px}
 .av{--s:30px;display:inline-flex;align-items:center;justify-content:center;flex:none;width:var(--s);height:var(--s);font-size:calc(var(--s)*.8);line-height:1;vertical-align:middle;margin:0 4px 0 0}
-.logo{width:52px;height:52px;flex:none;font-size:36px;line-height:1;border:0;background:none;padding:0;cursor:pointer}
+.logo{width:32px;height:32px;flex:none;font-size:26px;line-height:1;border:0;background:none;padding:0;cursor:pointer}
 .ev.done{background:var(--gr)}
 .yr.past{background:var(--pyr)}
+.subt{display:none}.top .wrap{padding-top:6px;padding-bottom:6px;gap:6px}.top .row{gap:6px;flex-wrap:nowrap}.top .btn{min-height:34px;padding:4px 10px;font-size:12px}.top .pill{min-height:26px}
+@media(max-width:700px){.lb{display:none}}
 .sr{display:grid;grid-template-columns:minmax(64px,32%) 1fr 28px;gap:8px;align-items:center}.sl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bt{display:flex;height:16px;background:var(--bg);border-radius:8px;overflow:hidden}.bt i{display:block;height:100%}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle}
 ::placeholder{color:var(--mut);opacity:1}
@@ -79,7 +81,7 @@ let S;try{S=Object.assign(init(),JSON.parse(localStorage.getItem(KEY)||'{}'))}ca
 if(!S.stat)S.stat={g:'time',s:'time'};
 let M=null;
 const cloud={st:'local',ready:false,ref:null,set:null};
-const statusPill=()=>{const m={local:['wa','💾 Vain tässä selaimessa'],connecting:['wa','☁️ Yhdistetään…'],saving:['wa','☁️ Tallennetaan…'],saved:['ok','☁️ Tallennettu pilveen'],error:['no','⚠️ Pilviyhteysvirhe']}[cloud.st];return`<span id="stat" class="pill ${m[0]}">${m[1]}</span>`};
+const statusPill=()=>{const m={local:['wa','💾 Vain tässä selaimessa'],connecting:['wa','☁️ Yhdistetään…'],saving:['wa','☁️ Tallennetaan…'],saved:['ok','☁️ Tallennettu pilveen'],error:['no','⚠️ Pilviyhteysvirhe']}[cloud.st];const[ic,...tx]=m[1].split(' ');return`<span id="stat" class="pill ${m[0]}" title="${tx.join(' ')}">${ic}<span class="lb"> ${tx.join(' ')}</span></span>`};
 const pill=()=>{const x=$('#stat');if(x)x.outerHTML=statusPill()};
 const payload=()=>JSON.parse(JSON.stringify({group:S.group,members:S.members,events:S.events.map(e=>({...e,comments:(e.comments||[]).map(c=>({...c,media:(c.media||[]).filter(m=>!m.u)}))})),unav:S.unav}));
 let tmr;
@@ -119,8 +121,8 @@ ${poll?pollHTML(e):done?`<div class="sm">Mukana: ${(e.attendees||[]).map(i=>av(m
 function view(){const q=stats(),next=q[0],g=S.group;
 const evy=st=>S.events.filter(e=>e.status===st).map(e=>+e.year),years=[...new Set(S.filter==='upcoming'?[...evy('upcoming'),CY,CY+1]:S.filter==='completed'?evy('completed'):S.events.map(e=>+e.year))].sort();
 const fe=S.events.filter(e=>S.filter==='all'||e.status===S.filter);
-return`<div class="top"><div class="wrap row sp"><div class="row"><button class="logo" data-a="settings" title="Asetukset">${esc(g.icon)}</button><div><h2 style="font-size:19px">${esc(g.name)}</h2><div class="sm subt">${esc(g.subtitle)}</div></div></div>
-<div class="row">${statusPill()}<button class="btn" data-a="members">👥 Jäsenet (${S.members.length})</button><button class="btn p dm" data-a="newev">＋ Uusi tapahtuma</button></div></div></div>
+return`<div class="top"><div class="wrap row sp"><div class="row"><button class="logo" data-a="settings" title="Asetukset">${esc(g.icon)}</button><div><h2 style="font-size:15px;line-height:1.2">${esc(g.name)}</h2><div class="sm subt">${esc(g.subtitle)}</div></div></div>
+<div class="row">${statusPill()}<button class="btn" data-a="members">👥<span class="lb"> Jäsenet</span> (${S.members.length})</button><button class="btn p dm" data-a="newev">＋ Uusi tapahtuma</button></div></div></div>
 <div class="wrap col"><div class="card col"><div class="row sp">${next?`<div class="row card" style="background:var(--acs)">${av(next,54)}<div><div class="sm"><b>SEURAAVA JÄRJESTÄMISVUORO</b></div><b>${esc(next.name)}</b> <span class="sm">(tapahtumia: ${next.tot})</span></div></div>`:''}
 <div class="row">${[['all','Kaikki'],['upcoming','Tulevat'],['completed','Pidetyt']].map(([id,l])=>`<button class="btn ${S.filter===id?'p':''}" data-a="filter" data-id="${id}">${l}</button>`).join('')}</div></div>
 <div class="row sc"><span class="sm">Porukka:</span>${S.members.map(m=>`<button class="pill" style="cursor:pointer" data-a="editmem" data-id="${m.id}">${av(m,30)} ${esc(m.name)} · ${q.find(x=>x.id===m.id).tot}</button>`).join('')}</div></div>

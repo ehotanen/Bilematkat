@@ -70,7 +70,7 @@ const maps=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURICompon
 const seasonOf=d=>{const m=+(d||'').split('-')[1]||1;return SE.find(s=>s.m.includes(m))||SE[0]};
 const defDate=(y,sid)=>`${y}-${String((SE.find(s=>s.id===sid)||SE[0]).d).padStart(2,'0')}-15`;
 function init(){const P=CY-1,N=CY+1;const ev=(id,t,date,time,end,sid,ln,ad,o,notes,st,rsvp,r,mem)=>({id,title:t,date,time,endDate:date,endTime:end,year:+date.slice(0,4),seasonId:sid,locationName:ln,address:ad,organizerId:o,notes,status:st,locked:false,rsvp,rating:r,memoryText:mem||''});
-return{group:{name:'Lopunaikojen Megabileet',subtitle:'Kaveriporukan aikajana, järjestämisvuorot ja muistot; since 2021',icon:'☄️'},
+return{group:{name:'Lopunaikojen Megabileet',subtitle:'Kaveriporukan aikajana, järjestämisvuorot ja muistot| since 2021',icon:'☄️'},
 members:[{id:'m1',name:'Aino',avatar:'🦊'},{id:'m2',name:'Mikko',avatar:'🐻'},{id:'m3',name:'Sara',avatar:'🦉'},{id:'m4',name:'Olli',avatar:'🐼'}],
 events:[ev('e1','Kevään viimeinen bunkkerigrilli',`${P}-05-18`,'18:00','23:00','spring','Tyvis “HQ”','Kaakkolammintie 8, 14500 Hämeenlinna','m1','Makkarat ja foliot mukaan.','completed',{},5,'Auringonlasku merellä ja huikea porukka!'),
 ev('e2','Syksyn meteoriittivalvojaiset',`${P}-09-21`,'21:30','02:00','autumn','Tyvis “HQ”','Kaakkolammintie 8, 14500 Hämeenlinna','m2','Makuualusta, termari ja taskulamppu.','completed',{},4,'Kirpeä syysyö ja muutama tähdenlento.'),

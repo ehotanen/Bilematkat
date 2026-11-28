@@ -87,7 +87,7 @@ const pill=()=>{const x=$('#stat');if(x)x.outerHTML=statusPill()};
 const payload=()=>JSON.parse(JSON.stringify({group:S.group,members:S.members,events:S.events.map(e=>({...e,media:(e.media||[]).filter(m=>!m.u),comments:(e.comments||[]).map(c=>({...c,media:(c.media||[]).filter(m=>!m.u)}))})),unav:S.unav}));
 let tmr;
 const save=(remote=true)=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Paikallinen tallennus epäonnistui')}
-if(remote&&cloud.ready){cloud.st='saving';pill();clearTimeout(tmr);tmr=setTimeout(()=>cloud.set(cloud.ref,{...payload(),updatedAt:Date.now()}).then(()=>{cloud.st='saved';pill()}).catch(e=>{console.error(e);cloud.st='error';pill();toast('Pilveen tallennus epäonnistui')}),300)}};
+if(remote&&cloud.ready){cloud.st='saving';pill();clearTimeout(tmr);tmr=setTimeout(()=>cloud.set(cloud.ref,{...(tmr=0,payload()),updatedAt:Date.now()}).then(()=>{cloud.st='saved';pill()}).catch(e=>{console.error(e);cloud.st='error';pill();toast('Pilveen tallennus epäonnistui')}),300)}};
 function toast(t,ms=3000){$('#toast').innerHTML=`<div class="toast">✨ ${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$('#toast').innerHTML='',ms)}
 const av=(m,n=28)=>{const h=[...String(m.id||m.name)].reduce((a,c)=>(a*31+c.charCodeAt(0))%360,7);return`<span class="av" style="--s:${n}px;--c1:hsl(${h} 90% 74%);--c2:hsl(${(h+45)%360} 85% 58%)">${m.avatar}</span>`};
 const mem=id=>S.members.find(m=>m.id===id)||{name:'Tuntematon',avatar:'🙂'};
@@ -108,11 +108,11 @@ const cmtHTML=e=>{const c=e.comments||[];return`<div class="col"><b class="sm">�
 const seasonVis=(y,s,has)=>{if(has||S.filter==='all')return true;const m=new Date().getMonth()+1,w=s.id==='winter',sp=s.id==='spring',au=s.id==='autumn';
 return S.filter==='completed'?(y<CY||(y===CY&&(w||(sp&&m>=4)||(au&&m>=8)))):(y>CY||(y===CY&&(w||(sp&&m<=6)||(au&&m<=10))))};
 const statsHTML=()=>{const ev=S.events.filter(e=>e.status==='completed');if(!ev.length)return'';const g=S.stat.g,so=g==='time'?'time':'count',grp={};
-ev.forEach(e=>{(g==='time'?[String(e.year)]:g==='place'?[e.locationName||'–']:g==='host'?orgsOf(e).map(i=>mem(i).name):(e.attendees||[]).map(i=>mem(i).name)).forEach(k=>{const r=grp[k]=grp[k]||{k,n:0,first:e.date,se:{}};r.n++;if(e.date<r.first)r.first=e.date;r.se[e.seasonId]=(r.se[e.seasonId]||0)+1})});
+ev.forEach(e=>{(g==='time'?[String(e.date||'').slice(0,4)||String(e.year)]:g==='place'?[e.locationName||'–']:g==='host'?orgsOf(e).map(i=>mem(i).name):(e.attendees||[]).map(i=>mem(i).name)).forEach(k=>{const r=grp[k]=grp[k]||{k,n:0,first:e.date,se:{}};r.n++;if(e.date<r.first)r.first=e.date;r.se[e.seasonId]=(r.se[e.seasonId]||0)+1})});
 const rows=Object.values(grp).sort(so==='count'?(a,b)=>b.n-a.n||a.k.localeCompare(b.k,'fi'):so==='name'?(a,b)=>a.k.localeCompare(b.k,'fi',{numeric:true}):(a,b)=>a.first.localeCompare(b.first)),mx=Math.max(1,...rows.map(r=>r.n));
 const places=new Set(ev.map(e=>e.locationName)).size,hosts=new Set(ev.flatMap(orgsOf)).size;
 const sw=(id,cur,act,l)=>`<button class="pill ${id===cur?'ok':''}" style="cursor:pointer" data-a="${act}" data-id="${id}">${l}</button>`;
-return`<div class="card col"><div class="row sp"><b>📊 Tilastot</b><span class="sm">${ev.length} pidettyä · ${places} paikkaa · ${hosts} pitäjää</span></div>
+return`<div class="card col"><div class="row sp"><b>📊 Tilastot</b><span class="sm">${ev.length} pidettyä (tänä vuonna ${ev.filter(e=>String(e.date||'').slice(0,4)===String(CY)).length}) · ${places} paikkaa · ${hosts} pitäjää</span></div>
 <div class="row sc"><span class="sm">Ryhmittele:</span>${sw('time',g,'sg','Aika')}${sw('place',g,'sg','Paikat')}${sw('host',g,'sg','Pitäjät')}${sw('att',g,'sg','Osallistujat')}</div>
 ${rows.length?'':'<div class="sm">Ei tietoja tässä ryhmittelyssä.</div>'}<div class="col" style="gap:8px">${rows.map(r=>`<div class="sr"><span class="sl">${esc(r.k)}</span><div class="bt">${g==='time'?SE.map(x=>r.se[x.id]?`<i style="width:${r.se[x.id]/mx*100}%;background:${x.c}"></i>`:'').join(''):`<i style="width:${r.n/mx*100}%;background:#d97706"></i>`}</div><b>${r.n}</b></div>`).join('')}</div>
 ${g==='time'?`<div class="row sm">${SE.map(x=>`<span><i class="dot" style="background:${x.c}"></i> ${x.n}</span>`).join('')}</div>`:''}</div>`};
@@ -251,7 +251,7 @@ const app=initializeApp(cfg);await signInAnonymously(getAuth(app));
 const db=getFirestore(app);cloud.db=db;cloud.doc=doc;cloud.get=getDoc;cloud.del=deleteDoc;cloud.ref=doc(db,'megabileet','state');cloud.set=setDoc;
 onSnapshot(cloud.ref,{includeMetadataChanges:true},snap=>{if(!cloud.chk){cloud.chk=1;setTimeout(chkMedia,0)}
 if(!snap.exists()){cloud.ready=true;save();return}
-cloud.ready=true;if(snap.metadata.hasPendingWrites)return;
+cloud.ready=true;if(snap.metadata.hasPendingWrites||tmr||cloud.st==='saving')return;
 const d=snap.data();S={...S,group:d.group||S.group,members:d.members||S.members,events:d.events||[],unav:d.unav||[]};
 if(M&&M.e){const ne=S.events.find(x=>x.id===M.e.id);if(ne)M.e=ne;else M=null}
 cloud.st='saved';if(!M)render();else pill();save(false)},

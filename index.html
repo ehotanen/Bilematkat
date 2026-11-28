@@ -37,7 +37,7 @@ input[type=radio],input[type=checkbox]{width:auto}
 .yr.past{background:var(--pyr)}
 .subt{font-size:11px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top .wrap>.row:first-child{flex:1 1 auto;min-width:0}.top .row>div{min-width:0}.top .wrap{padding-top:6px;padding-bottom:6px;gap:6px}.top .row{gap:6px;flex-wrap:nowrap}.top .btn{min-height:34px;padding:4px 10px;font-size:12px}.top .pill{min-height:26px}
 @media(max-width:700px){.lb{display:none}}
-.sr{display:grid;grid-template-columns:minmax(64px,32%) 1fr 28px;gap:8px;align-items:center}.sl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr{display:grid;grid-template-columns:minmax(64px,32%) 1fr auto;gap:8px;align-items:center}.sl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bt{display:flex;height:16px;background:var(--bg);border-radius:8px;overflow:hidden}.bt i{display:block;height:100%}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle}
 ::placeholder{color:var(--mut);opacity:1}
 html{-webkit-text-size-adjust:100%}html.lock,html.lock body{overflow:hidden}
@@ -70,7 +70,7 @@ const maps=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURICompon
 const seasonOf=d=>{const m=+(d||'').split('-')[1]||1;return SE.find(s=>s.m.includes(m))||SE[0]};
 const defDate=(y,sid)=>`${y}-${String((SE.find(s=>s.id===sid)||SE[0]).d).padStart(2,'0')}-15`;
 function init(){const P=CY-1,N=CY+1;const ev=(id,t,date,time,end,sid,ln,ad,o,notes,st,rsvp,r,mem)=>({id,title:t,date,time,endDate:date,endTime:end,year:+date.slice(0,4),seasonId:sid,locationName:ln,address:ad,organizerId:o,notes,status:st,locked:false,rsvp,rating:r,memoryText:mem||''});
-return{group:{name:'Lopunaikojen Megabileet',subtitle:'Kaveriporukan aikajana, järjestämisvuorot ja muistot',icon:'☄️'},
+return{group:{name:'Lopunaikojen Megabileet',subtitle:'Kaveriporukan eventit ja muistot v1.0',icon:'☄️'},
 members:[{id:'m1',name:'Aino',avatar:'🦊'},{id:'m2',name:'Mikko',avatar:'🐻'},{id:'m3',name:'Sara',avatar:'🦉'},{id:'m4',name:'Olli',avatar:'🐼'}],
 events:[ev('e1','Kevään viimeinen bunkkerigrilli',`${P}-05-18`,'18:00','23:00','spring','Tyvis “HQ”','Kaakkolammintie 8, 14500 Hämeenlinna','m1','Makkarat ja foliot mukaan.','completed',{},5,'Auringonlasku merellä ja huikea porukka!'),
 ev('e2','Syksyn meteoriittivalvojaiset',`${P}-09-21`,'21:30','02:00','autumn','Tyvis “HQ”','Kaakkolammintie 8, 14500 Hämeenlinna','m2','Makuualusta, termari ja taskulamppu.','completed',{},4,'Kirpeä syysyö ja muutama tähdenlento.'),
@@ -80,11 +80,14 @@ ev('e5','Kevään piknikpäivä',`${N}-05-16`,'14:00','20:00','spring','Tyvis �
 unav:[{id:'u1',memberId:'m3',year:N,season:'spring',reason:'Vaihto-opiskelu'}],filter:'all',collapsed:{}}}
 let S;try{S=Object.assign(init(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=init()}
 if(!S.stat)S.stat={g:'time',s:'time'};
+if(!S.ideas)S.ideas=[];
+const OLD_SUB='Kaveriporukan aikajana, järjestämisvuorot ja muistot',NEW_SUB='Kaveriporukan eventit ja muistot v1.0';
+if(S.group&&S.group.subtitle===OLD_SUB)S.group.subtitle=NEW_SUB;
 let M=null;
 const cloud={st:'local',ready:false,ref:null,set:null};
 const statusPill=()=>{const m={local:['wa','💾 Vain tässä selaimessa'],connecting:['wa','☁️ Yhdistetään…'],saving:['wa','☁️ Tallennetaan…'],saved:['ok','☁️ Tallennettu pilveen'],error:['no','⚠️ Pilviyhteysvirhe']}[cloud.st];const[ic,...tx]=m[1].split(' ');return`<span id="stat" class="pill ${m[0]}" title="${tx.join(' ')}">${ic}<span class="lb"> ${tx.join(' ')}</span></span>`};
 const pill=()=>{const x=$('#stat');if(x)x.outerHTML=statusPill()};
-const payload=()=>JSON.parse(JSON.stringify({group:S.group,members:S.members,events:S.events.map(e=>({...e,media:(e.media||[]).filter(m=>!m.u),comments:(e.comments||[]).map(c=>({...c,media:(c.media||[]).filter(m=>!m.u)}))})),unav:S.unav}));
+const payload=()=>JSON.parse(JSON.stringify({group:S.group,members:S.members,events:S.events.map(e=>({...e,media:(e.media||[]).filter(m=>!m.u),comments:(e.comments||[]).map(c=>({...c,media:(c.media||[]).filter(m=>!m.u)}))})),unav:S.unav,ideas:(S.ideas||[]).map(i=>({...i,media:(i.media||[]).filter(m=>!m.u)}))}));
 let tmr;
 const save=(remote=true)=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Paikallinen tallennus epäonnistui')}
 if(remote&&cloud.ready){cloud.st='saving';pill();clearTimeout(tmr);tmr=setTimeout(()=>cloud.set(cloud.ref,{...(tmr=0,payload()),updatedAt:Date.now()}).then(()=>{cloud.st='saved';pill()}).catch(e=>{console.error(e);cloud.st='error';pill();toast('Pilveen tallennus epäonnistui')}),300)}};
@@ -107,18 +110,33 @@ const imgField=(e,lbl='Kuvat (esim. kutsun kuva)',vid=false)=>`${(e.media||[]).l
 const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
 const ratePill=e=>{const r=(e.comments||[]).map(x=>x.rating);if(!r.length)return e.rating?`<span class="pill wa">★ ${e.rating}/5</span>`:'';return`<span class="pill wa">★ ${(r.reduce((a,b)=>a+b,0)/r.length).toFixed(1)}/5 (${r.length})</span>`};
 const cmtHTML=e=>{const c=e.comments||[];return`<div class="col"><b class="sm">💬 Palaute (${c.length})</b>${c.map(x=>{const w=mem(x.memberId);return`<div class="card col" style="padding:10px"><div class="row sp"><span>${av(w,26)} <b>${esc(w.name)}</b> <span class="pill wa">${stars(x.rating)}</span></span><span class="sm">${fd(x.date)}${x.edited?' · muokattu':''}</span></div>${x.text?`<p style="white-space:pre-wrap">${esc(x.text)}</p>`:''}${x.media?.length?`<div class="row">${x.media.map(m=>m.type==='v'?`<video class="mi" controls preload="none" playsinline data-mid="${m.id}" data-n="${m.n}"></video>`:`<img class="mi" data-a="zoom" ${m.u?`src="${m.u}"`:`data-mid="${m.id}" data-n="${m.n}"`} alt="" title="${esc(m.name)}">`).join('')}</div>`:''}<div class="row"><button class="btn" data-a="editc" data-id="${e.id}" data-c="${x.id}">✏️ Muokkaa</button><button class="btn" data-a="delc" data-id="${e.id}" data-c="${x.id}">🗑️ Poista palaute</button></div></div>`}).join('')}</div>`};
+const ideaCard=i=>{const w=mem(i.memberId),c=i.comments||[],opts=id=>S.members.map(m=>`<option value="${m.id}">${m.avatar} ${esc(m.name)}</option>`).join('');
+return`<div class="card col" style="padding:12px"><div class="row sp"><span>${av(w,28)} <b>${esc(w.name)}</b> <span class="sm">${fd(i.date)}</span></span><button class="btn" data-a="delidea" data-id="${i.id}">🗑️ Poista</button></div>${i.text?`<p style="white-space:pre-wrap">${esc(i.text)}</p>`:''}${mRow(i.media)}
+<div class="col" style="gap:6px"><b class="sm">💬 Kommentit (${c.length})</b>${c.map(x=>{const u=mem(x.memberId);return`<div class="row sp" style="background:var(--bg);border-radius:10px;padding:6px 10px;flex-wrap:nowrap"><div style="min-width:0">${av(u,22)} <b>${esc(u.name)}</b> <span class="sm">${fd(x.date)}</span><div style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(x.text)}</div></div><button class="btn" data-a="delicmt" data-id="${i.id}" data-c="${x.id}" aria-label="Poista kommentti">🗑️</button></div>`}).join('')}
+<form data-f="icmt" data-id="${i.id}" class="row" style="flex-wrap:nowrap"><select name="who" id="icw-${i.id}" data-keep style="width:auto;flex:none;max-width:42%">${opts()}</select><input name="text" id="ic-${i.id}" data-keep placeholder="Kommentoi ideaa…" autocomplete="off"><button class="btn p">Lähetä</button></form></div></div>`};
+const ideasHTML=()=>{const I=S.ideas||[],L=S.ideaAll?I:I.slice(0,5);
+return`<div class="card col"><div class="row sp"><b>💡 Ideointi</b><span class="sm">${I.length} ideaa</span></div>
+<form data-f="idea" class="col"><div><label>Kirjoittaja</label><select name="who" id="idwho" data-keep>${S.members.map(m=>`<option value="${m.id}">${m.avatar} ${esc(m.name)}</option>`).join('')}</select></div>
+<div><label>Idea</label><textarea name="text" id="idtext" data-keep rows="3" placeholder="Esim. mökkiviikonloppu, saunailta, risteily…"></textarea></div>
+<div><label>Kuvat</label><input type="file" name="files" id="idfile" data-keep accept="image/*" multiple><div class="sm">${cloud.ready?'Kuvat pienennetään automaattisesti.':'Testitila: kuvat tallentuvat vain tähän selaimeen.'}</div></div>
+<button class="btn p">＋ Lisää idea</button></form>
+${L.length?`<div class="col">${L.map(ideaCard).join('')}</div>`:'<div class="sm">Ei vielä ideoita. Kirjoita ensimmäinen!</div>'}
+${I.length>5?`<button class="btn" data-a="ideaall">${S.ideaAll?'Näytä vain uusimmat':'Näytä kaikki ('+I.length+')'}</button>`:''}</div>`};
 const seasonVis=(y,s,has)=>{if(has||S.filter==='all')return true;const m=new Date().getMonth()+1,w=s.id==='winter',sp=s.id==='spring',au=s.id==='autumn';
 return S.filter==='completed'?(y<CY||(y===CY&&(w||(sp&&m>=4)||(au&&m>=8)))):(y>CY||(y===CY&&(w||(sp&&m<=6)||(au&&m<=10))))};
-const statsHTML=()=>{const ev=S.events.filter(isHeld);if(!ev.length)return'';const g=S.stat.g,so=g==='time'?'time':'count',grp={};
-ev.forEach(e=>{(g==='time'?[String(e.date||'').slice(0,4)||String(e.year)]:g==='place'?[e.locationName||'–']:g==='host'?orgsOf(e).map(i=>mem(i).name):attendeesOf(e).map(i=>mem(i).name)).forEach(k=>{const r=grp[k]=grp[k]||{k,n:0,first:e.date,se:{}};r.n++;if(e.date<r.first)r.first=e.date;r.se[e.seasonId]=(r.se[e.seasonId]||0)+1})});
+const statsHTML=()=>{const ev=S.events;if(!ev.length)return'';const g=S.stat.g,so=g==='time'?'time':'count',grp={};
+const yr=e=>String(e.date||'').slice(0,4)||String(e.year||'–');
+ev.forEach(e=>{const h=isHeld(e);(g==='time'?[yr(e)]:g==='place'?[e.locationName||'–']:g==='host'?orgsOf(e).map(i=>mem(i).name):attendeesOf(e).map(i=>mem(i).name)).forEach(k=>{const r=grp[k]=grp[k]||{k,n:0,h:0,u:0,first:e.date||'',se:{}};r.n++;h?r.h++:r.u++;if((e.date||'')<r.first)r.first=e.date||'';const t=r.se[e.seasonId]=r.se[e.seasonId]||{h:0,u:0};h?t.h++:t.u++})});
 const rows=Object.values(grp).sort(so==='count'?(a,b)=>b.n-a.n||a.k.localeCompare(b.k,'fi'):so==='name'?(a,b)=>a.k.localeCompare(b.k,'fi',{numeric:true}):(a,b)=>(a.first||'').localeCompare(b.first||'')),mx=Math.max(1,...rows.map(r=>r.n));
-const places=new Set(ev.map(e=>e.locationName)).size,hosts=new Set(ev.flatMap(orgsOf)).size;
+const held=ev.filter(isHeld).length,up=ev.length-held,places=new Set(ev.map(e=>e.locationName)).size,hosts=new Set(ev.flatMap(orgsOf)).size;
+const col=id=>(SE.find(x=>x.id===id)||{c:'#78716c'}).c,seg=(w,c,u)=>w?`<i style="width:${w/mx*100}%;background:${u?`repeating-linear-gradient(135deg,${c} 0 4px,transparent 4px 8px)`:c}"></i>`:'';
+const bar=r=>g==='time'?Object.keys(r.se).map(id=>seg(r.se[id].h,col(id),0)+seg(r.se[id].u,col(id),1)).join(''):seg(r.h,'#d97706',0)+seg(r.u,'#d97706',1);
 const sw=(id,cur,act,l)=>`<button class="pill ${id===cur?'ok':''}" style="cursor:pointer" data-a="${act}" data-id="${id}">${l}</button>`;
-return`<div class="card col"><div class="row sp"><b>📊 Tilastot</b><span class="sm">${ev.length} pidettyä (tänä vuonna ${ev.filter(e=>String(e.date||'').slice(0,4)===String(CY)).length}) · ${places} paikkaa · ${hosts} pitäjää</span></div>
+return`<div class="card col"><div class="row sp"><b>📊 Tilastot</b><span class="sm">${ev.length} tapahtumaa (${held} pidettyä, ${up} tulossa; tänä vuonna ${ev.filter(e=>yr(e)===String(CY)).length}) · ${places} paikkaa · ${hosts} pitäjää</span></div>
 <div class="row sc"><span class="sm">Ryhmittele:</span>${sw('time',g,'sg','Aika')}${sw('place',g,'sg','Paikat')}${sw('host',g,'sg','Pitäjät')}${sw('att',g,'sg','Osallistujat')}</div>
-${rows.length?'':'<div class="sm">Ei tietoja tässä ryhmittelyssä.</div>'}<div class="col" style="gap:8px">${rows.map(r=>`<div class="sr"><span class="sl">${esc(r.k)}</span><div class="bt">${g==='time'?Object.keys(r.se).map(id=>`<i style="width:${r.se[id]/mx*100}%;background:${(SE.find(x=>x.id===id)||{c:'#78716c'}).c}"></i>`).join(''):`<i style="width:${r.n/mx*100}%;background:#d97706"></i>`}</div><b>${r.n}</b></div>`).join('')}</div>
-<details><summary class="sm" style="cursor:pointer;padding:6px 0">Laskettavat tapahtumat (${ev.length})</summary><div class="col sm" style="gap:6px">${[...ev].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(e=>`<div>${fd(e.date)} · <b>${esc(e.title)}</b> · ${esc(e.locationName||'–')} · järj.: ${esc(orgsOf(e).map(i=>mem(i).name).join(', '))} · mukana: ${esc(attendeesOf(e).map(i=>mem(i).name).join(', ')||'–')}</div>`).join('')}</div></details>
-${g==='time'?`<div class="row sm">${SE.map(x=>`<span><i class="dot" style="background:${x.c}"></i> ${x.n}</span>`).join('')}</div>`:''}</div>`};
+${rows.length?'':'<div class="sm">Ei tietoja tässä ryhmittelyssä.</div>'}<div class="col" style="gap:8px">${rows.map(r=>`<div class="sr"><span class="sl">${esc(r.k)}</span><div class="bt">${bar(r)}</div><span class="sn" title="${r.h} pidettyä, ${r.u} tulossa"><b>${r.n}</b>${r.u?`<span class="sm"> (${r.h}+${r.u})</span>`:''}</span></div>`).join('')}</div>
+<div class="row sm"><span><i class="dot" style="background:#d97706"></i> pidetty</span><span><i class="dot" style="background:repeating-linear-gradient(135deg,#d97706 0 3px,transparent 3px 6px);border:1px solid #d97706"></i> tulossa / ei vielä kuitattu</span>${g==='time'?SE.map(x=>`<span><i class="dot" style="background:${x.c}"></i> ${x.n}</span>`).join(''):''}</div>
+<details><summary class="sm" style="cursor:pointer;padding:6px 0">Laskettavat tapahtumat (${ev.length})</summary><div class="col sm" style="gap:6px">${[...ev].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(e=>`<div>${isHeld(e)?'✓':'⏳'} ${fd(e.date)} · <b>${esc(e.title)}</b> · ${esc(e.locationName||'–')} · järj.: ${esc(orgsOf(e).map(i=>mem(i).name).join(', '))} · mukana: ${esc(attendeesOf(e).map(i=>mem(i).name).join(', ')||'–')}</div>`).join('')}</div></details></div>`};
 function evHTML(e){const o=mem(e.organizerId),done=e.status==='completed',poll=!!(e.poll&&!e.poll.confirmed);
 const rs={yes:['ok','Mukana'],maybe:['wa','Ehkä'],no:['no','Ei pääse']};
 return`<div class="ev${done?' done':''}"><div class="row sp"><div class="row"><span class="pill ${done?'ok':'wa'}">${done?'✓ Pidetty':'⏳ Tulossa'}</span>${poll?'<span class="pill wa">🗳️ Ajankohta auki</span>':`<span class="pill">📅 ${fd(e.date)} ${esc(e.time)}${e.endTime?' – '+(e.endDate&&e.endDate!==e.date?fd(e.endDate)+' ':'')+esc(e.endTime):''}</span>`}${done?ratePill(e):''}</div>
@@ -134,7 +152,7 @@ return`<div class="top"><div class="wrap row sp"><div class="row"><button class=
 <div class="wrap col">${cloud.ready&&cloud.mediaOk===false?'<div class="warn" data-a="rules" style="cursor:pointer;border-radius:12px;padding:10px 12px;font-size:13px">⚠️ Kuvien tallennus ei ole käytössä: Firestoren säännöt puuttuvat. Napauta, niin näet korjausohjeen.</div>':''}<div class="card col"><div class="row sp">${next?`<div class="row card" style="background:var(--acs)">${av(next,54)}<div><div class="sm"><b>SEURAAVA JÄRJESTÄMISVUORO</b></div><b>${esc(next.name)}</b> <span class="sm">(pidettyjä: ${next.tot})</span></div></div>`:''}
 <div class="row">${[['all','Kaikki'],['upcoming','Tulevat'],['completed','Pidetyt']].map(([id,l])=>`<button class="btn ${S.filter===id?'p':''}" data-a="filter" data-id="${id}">${l}</button>`).join('')}</div></div>
 <div class="row sc"><span class="sm">Porukka:</span>${S.members.map(m=>`<button class="pill" style="cursor:pointer" data-a="editmem" data-id="${m.id}">${av(m,30)} ${esc(m.name)} · ${q.find(x=>x.id===m.id).tot}</button>`).join('')}</div></div>
-${S.filter==='completed'?statsHTML():''}${years.length?years.map(y=>{const n=fe.filter(e=>+e.year===y).length,col=S.collapsed[y];
+${S.filter==='upcoming'?ideasHTML():''}${S.filter!=='upcoming'?statsHTML():''}${years.length?years.map(y=>{const n=fe.filter(e=>+e.year===y).length,col=S.collapsed[y];
 return`<div><div class="yr${y<CY?' past':''}" data-a="toggle" data-id="${y}"><h2>${y} ${col?'▾':'▴'}</h2><span class="pill" style="color:var(--tx)">${n} tapahtumaa</span></div>${col?'':`<div class="yrb">${SE.map(s=>{
 const se=fe.filter(e=>+e.year===y&&e.seasonId===s.id).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!seasonVis(y,s,se.length))return'';
 const cf=S.unav.filter(u=>+u.year===y&&u.season===s.id);
@@ -164,6 +182,8 @@ if(M.t==='delc')return wrapM('Poistetaanko palaute?','<p>Haluatko varmasti poist
 if(M.t==='cmt')return wrapM((M.c?'Muokkaa palautetta: ':'Palaute: ')+esc(M.e.title),`<form data-f="cmt" class="col"><div><label>Kirjoittaja</label><select name="who">${S.members.map(m=>`<option value="${m.id}" ${cm0()&&cm0().memberId===m.id?'selected':''}>${m.avatar} ${esc(m.name)}</option>`).join('')}</select></div><div><label>Arvosana</label><div class="stars">${[5,4,3,2,1].map(n=>`<input type="radio" name="rate" id="rt${n}" value="${n}" ${n===(cm0()?cm0().rating:5)?'checked':''}><label for="rt${n}" title="${n}">★</label>`).join('')}</div></div><div><label>Palaute</label><textarea name="text" rows="3" placeholder="Muistoja, kohokohtia, terveisiä…">${esc(cm0()?cm0().text:'')}</textarea></div>${imgField(cm0()||{},'Kuvat ja videot',true)}<button class="btn p">${M.c?'Tallenna muutokset':'Lähetä palaute'}</button></form>`);
 if(M.t==='imgs')return wrapM('Kuvat: '+esc(M.e.title),`<form data-f="imgs" class="col">${imgField(M.e)}<button class="btn p">Tallenna</button></form>`);
 if(M.t==='rules')return wrapM('Kuvien tallennus: päivitä Firestoren säännöt',`<p class="sm">Firebase estää kuvien tallennuksen, koska tietokannan säännöissä ei ole media-sääntöä${cloud.mediaErr?' ('+esc(cloud.mediaErr)+')':''}. Korjaus tehdään kerran:</p><ol style="margin:0;padding-left:20px"><li>Avaa Firebase-konsoli → Firestore Database → <b>Rules</b>.</li><li>Poista vanhat säännöt ja liitä alla olevat (paina Kopioi).</li><li>Paina <b>Publish</b> ja lataa tämä sivu uudelleen.</li></ol><pre class="card sm" style="white-space:pre-wrap;user-select:all">${esc(RULES)}</pre><button class="btn p" data-a="copyrules">Kopioi säännöt</button>`);
+if(M.t==='delidea')return wrapM('Poistetaanko idea?','<p>Haluatko varmasti poistaa tämän idean kuvineen ja kommentteineen? Toimintoa ei voi perua.</p><div class="row"><button class="btn" data-a="close">Peruuta</button><button class="btn r" data-a="confdelidea">Kyllä, poista</button></div>');
+if(M.t==='delicmt')return wrapM('Poistetaanko kommentti?','<p>Haluatko varmasti poistaa tämän kommentin? Toimintoa ei voi perua.</p><div class="row"><button class="btn" data-a="close">Peruuta</button><button class="btn r" data-a="confdelicmt">Kyllä, poista</button></div>');
 if(M.t==='del')return wrapM('Poistetaanko?',`<p>Haluatko varmasti poistaa tapahtuman <b>“${esc(M.e.title)}”</b>?</p>${M.e.status==='completed'?'<p class="warn" style="border-radius:10px">⚠️ Tämä on jo pidetty tapahtuma. Sen arvosana, muisto ja osallistujatiedot poistetaan pysyvästi.</p>':''}<p class="sm">Toimintoa ei voi perua.</p><div class="row"><button class="btn" data-a="close">Peruuta</button><button class="btn r" data-a="confdel">Kyllä, poista</button></div>`);return''}
 const MC={};
 const readURL=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
@@ -180,7 +200,9 @@ async function loadMedia(el){const id=el.dataset.mid;if(!MC[id])MC[id]=(async()=
 try{el.src=await MC[id];el.classList.remove('er');el.classList.add('ld')}catch(e){console.error(e);el.classList.add('er');el.title='Latausvirhe: '+(e.code||e.message)+' (napauta yrittääksesi uudelleen)';if(!loadMedia.w){loadMedia.w=1;toast('Kuvan lataus epäonnistui: '+(e.code||e.message),9000)}}}
 const io=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){io.unobserve(x.target);loadMedia(x.target)}}),{rootMargin:'200px'}):null;
 const hookMedia=()=>{if(!cloud.ready)return;document.querySelectorAll('[data-mid]:not(.ld)').forEach(loadMedia)};
-const render=()=>{$('#app').innerHTML=view();document.documentElement.classList.toggle('lock',!!M);hookMedia()};
+const keepVals=()=>{const m={};document.querySelectorAll('[data-keep]').forEach(el=>{if(el.id)m[el.id]=el.type==='file'?el:el.value});return m};
+const restore=m=>Object.entries(m).forEach(([id,v])=>{const el=document.getElementById(id);if(!el)return;if(typeof v==='string'){if(v)el.value=v}else if(v.files&&v.files.length)el.replaceWith(v)});
+const render=()=>{const k=keepVals();$('#app').innerHTML=view();restore(k);document.documentElement.classList.toggle('lock',!!M);hookMedia()};
 const draw=()=>{render();save()};
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id,evn=S.events.find(e=>e.id===id);
 if(a==='closeov'){if(ev.target!==t)return;M=null}else if(a==='close')M=null;
@@ -188,7 +210,10 @@ else if(a==='settings')M={t:'settings'};else if(a==='members')M={t:'members'};
 else if(a==='sg')S.stat.g=id;else if(a==='ss')S.stat.s=id;else if(a==='filter')S.filter=id;else if(a==='toggle')S.collapsed[id]=!S.collapsed[id];
 else if(a==='editmem')M={t:'mem',id};
 else if(a==='newev')M={t:'ev',y:+t.dataset.y||CY,s:t.dataset.s};else if(a==='editev')M={t:'ev',e:evn};
-else if(a==='editc')M={t:'cmt',e:evn,c:t.dataset.c};else if(a==='rules')M={t:'rules'};else if(a==='copyrules'){try{navigator.clipboard.writeText(RULES);toast('Säännöt kopioitu')}catch(e){toast('Kopioi teksti käsin')}return}else if(a==='imgs')M={t:'imgs',e:evn};else if(a==='cmt')M={t:'cmt',e:evn};else if(a==='delc')M={t:'delc',e:evn,c:t.dataset.c};else if(a==='zoom'){if(!t.getAttribute('src')){if(t.dataset.mid){delete MC[t.dataset.mid];t.classList.remove('er');loadMedia(t)}return}M={t:'zoom',u:t.src}}else if(a==='confdelc'){const ev=S.events.find(x=>x.id===M.e.id),c=ev&&(ev.comments||[]).find(x=>x.id===M.c);if(c){delMedia(c.media||[]);ev.comments=ev.comments.filter(x=>x.id!==M.c)}M=null;toast('Palaute poistettu')}else if(a==='done')M={t:'done',e:evn};else if(a==='delev')M={t:'del',e:evn};
+else if(a==='editc')M={t:'cmt',e:evn,c:t.dataset.c};else if(a==='rules')M={t:'rules'};else if(a==='copyrules'){try{navigator.clipboard.writeText(RULES);toast('Säännöt kopioitu')}catch(e){toast('Kopioi teksti käsin')}return}else if(a==='delidea')M={t:'delidea',id};else if(a==='delicmt')M={t:'delicmt',id,c:t.dataset.c};else if(a==='ideaall')S.ideaAll=!S.ideaAll;
+else if(a==='confdelidea'){const x=(S.ideas||[]).find(i=>i.id===M.id);if(x)delMedia(x.media||[]);S.ideas=(S.ideas||[]).filter(i=>i.id!==M.id);M=null;toast('Idea poistettu')}
+else if(a==='confdelicmt'){const x=(S.ideas||[]).find(i=>i.id===M.id);if(x)x.comments=(x.comments||[]).filter(c=>c.id!==M.c);M=null;toast('Kommentti poistettu')}
+else if(a==='imgs')M={t:'imgs',e:evn};else if(a==='cmt')M={t:'cmt',e:evn};else if(a==='delc')M={t:'delc',e:evn,c:t.dataset.c};else if(a==='zoom'){if(!t.getAttribute('src')){if(t.dataset.mid){delete MC[t.dataset.mid];t.classList.remove('er');loadMedia(t)}return}M={t:'zoom',u:t.src}}else if(a==='confdelc'){const ev=S.events.find(x=>x.id===M.e.id),c=ev&&(ev.comments||[]).find(x=>x.id===M.c);if(c){delMedia(c.media||[]);ev.comments=ev.comments.filter(x=>x.id!==M.c)}M=null;toast('Palaute poistettu')}else if(a==='done')M={t:'done',e:evn};else if(a==='delev')M={t:'del',e:evn};
 else if(a==='confdel'){delMedia((M.e.comments||[]).flatMap(c=>c.media||[]).concat(M.e.media||[]));S.events=S.events.filter(e=>e.id!==M.e.id);M=null;toast('Tapahtuma poistettu')}
 else if(a==='rsvp'){const o=['yes','maybe','no'],c=evn.rsvp?.[t.dataset.m]||'maybe';evn.rsvp={...evn.rsvp,[t.dataset.m]:o[(o.indexOf(c)+1)%3]}}
 else if(a==='delmem'){if(!mem(id).custom)return;S.members=S.members.filter(m=>m.id!==id);S.unav=S.unav.filter(u=>u.memberId!==id)}
@@ -201,6 +226,15 @@ async function saveImgs(f){const id=M.e.id,g=new FormData(f),files=[...g.getAll(
 const up=files.length?await upMedia(files):[];const ev=S.events.find(x=>x.id===id);
 if(ev){delMedia((ev.media||[]).filter(m=>rm.includes(m.id)));ev.media=[...(ev.media||[]).filter(m=>!rm.includes(m.id)),...up]}
 M=null;draw();up.failed?toast('Kuvaa ei tallennettu. Tarkista Firestoren säännöt (media).',9000):toast('Kuvat päivitetty')}
+async function addIdea(f,d){const text=(d.text||'').trim(),files=[...new FormData(f).getAll('files')].filter(x=>x&&x.size);
+if(!text&&!files.length){toast('Kirjoita idea tai lisää kuva');return}
+const b=f.querySelector('button.p');b.disabled=true;b.textContent='Lisätään…';
+const up=files.length?await upMedia(files):[];
+S.ideas=[{id:'i-'+Date.now(),memberId:d.who,text,date:today(),media:up,comments:[]},...(S.ideas||[])];
+const sel=f.querySelector('[name=who]'),who=sel.value;f.reset();sel.value=who;draw();
+up.failed?toast('Idea lisättiin, mutta '+up.failed+' kuvaa ei tallentunut. Tarkista Firestoren säännöt (media).',9000):toast('Idea lisätty')}
+function addIdeaCmt(f,d){const t=(d.text||'').trim();if(!t)return;const x=(S.ideas||[]).find(i=>i.id===f.dataset.id);if(!x)return;
+x.comments=[...(x.comments||[]),{id:'ic-'+Date.now(),memberId:d.who,text:t,date:today()}];f.querySelector('[name=text]').value='';draw();toast('Kommentti lisätty')}
 async function addCmt(f,d){const id=M.e.id,cid=M.c,g=new FormData(f),files=[...g.getAll('files')].filter(x=>x&&x.size),rm=g.getAll('rmimg'),b=f.querySelector('button.p');b.disabled=true;b.textContent='Tallennetaan…';
 const up=files.length?await upMedia(files):[];const ev=S.events.find(x=>x.id===id);
 if(ev){const cs=ev.comments||[],c0=cid&&cs.find(x=>x.id===cid);
@@ -212,6 +246,8 @@ document.addEventListener('change',e=>{const f=e.target.closest('form[data-f=ev]
 if(e.target===f.endDate||e.target===f.endTime)f.dataset.et=1;if(f.dataset.new&&!f.dataset.et&&(e.target===f.date||e.target===f.time)&&f.date.value){f.endDate.value=addDays(f.date.value,1);f.endTime.value='12:00'}else if(e.target===f.date&&f.endDate.value<f.date.value)f.endDate.value=f.date.value;
 sync(f);const pastHint=!f.poll.checked&&f.endDate.value&&new Date(f.endDate.value+'T'+(f.endTime.value||'23:59'))<new Date()?' · ⏮️ Menneenä: tallentuu pidettynä (harmaa). Valitse osallistujat alta.':'';$('#hint').innerHTML=`Kausi: <b>${s.n} ${y}</b>${pastHint}${c.length?` · ⚠️ Esteet: ${c.map(x=>esc(mem(x.memberId).name)+' ('+esc(x.reason)+')').join(', ')}`:''}`});
 document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target,k=f.dataset.f,d=Object.fromEntries(new FormData(f));
+if(k==='idea'){addIdea(f,d);return}
+if(k==='icmt'){addIdeaCmt(f,d);return}
 if(k==='imgs'){saveImgs(f);return}
 if(k==='cmt'){addCmt(f,d);return}
 if(k==='settings'){S.group={name:d.name,subtitle:d.subtitle,icon:(d.custom||'').trim()||d.icon||S.group.icon};M=null;toast('Asetukset päivitetty')}
@@ -255,9 +291,9 @@ const db=getFirestore(app);cloud.db=db;cloud.doc=doc;cloud.get=getDoc;cloud.del=
 onSnapshot(cloud.ref,{includeMetadataChanges:true},snap=>{if(!cloud.chk){cloud.chk=1;setTimeout(chkMedia,0)}
 if(!snap.exists()){cloud.ready=true;save();return}
 cloud.ready=true;if(snap.metadata.hasPendingWrites||tmr||cloud.st==='saving')return;
-const d=snap.data();S={...S,group:d.group||S.group,members:d.members||S.members,events:d.events||[],unav:d.unav||[]};
+const d=snap.data();S={...S,group:d.group||S.group,members:d.members||S.members,events:d.events||[],unav:d.unav||[],ideas:d.ideas||S.ideas||[]};const mig=!!(S.group&&S.group.subtitle===OLD_SUB);if(mig)S.group={...S.group,subtitle:NEW_SUB};
 if(M&&M.e){const ne=S.events.find(x=>x.id===M.e.id);if(ne)M.e=ne;else M=null}
-cloud.st='saved';if(!M)render();else pill();save(false)},
+cloud.st='saved';if(!M)render();else pill();save(mig)},
 err=>{console.error(err);cloud.st='error';pill()})}
 catch(e){console.error(e);cloud.st='error';pill()}})();
 </script></body></html>
